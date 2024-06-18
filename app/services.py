@@ -1,14 +1,20 @@
+# services.py
+
 import requests
-import openai
+from openai import OpenAI
 import os
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from bson import ObjectId
 import base64
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Initialize OpenAI API key
-openai.api_key = os.getenv('OPENAI_API_KEY')
+client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
 def fetch_boards():
     jira_domain = os.getenv('JIRA_DOMAIN')
@@ -80,7 +86,7 @@ def fetch_sprint_data(board_id):
 
 def summarize_data(data):
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
@@ -88,7 +94,7 @@ def summarize_data(data):
             ],
             max_tokens=150
         )
-        return response['choices'][0]['message']['content'].strip()
+        return response.choices[0].message.content.strip()
     except Exception as e:
         print(f"Error summarizing data: {e}")
     return "Summary could not be generated."

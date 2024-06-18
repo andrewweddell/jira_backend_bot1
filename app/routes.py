@@ -1,11 +1,10 @@
+# routes.py
+
 import os
-import openai
 from flask import request, jsonify, current_app as app
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
 from .services import fetch_boards, fetch_sprint_data, summarize_data, send_email, convert_objectid
 from .db import sprints
-
-openai.api_key = os.getenv('OPENAI_API_KEY')
 
 @app.route('/fetch-boards', methods=['GET'])
 @jwt_required()
@@ -25,7 +24,6 @@ def fetch_sprint():
     if not board_id:
         return jsonify({"error": "Board ID is required"}), 400
 
-    identity = get_jwt_identity()
     if sprints is None:
         return jsonify({"error": "Database connection error"}), 500
 
@@ -56,7 +54,6 @@ def fetch_sprint():
 @app.route('/current-sprint', methods=['GET'])
 @jwt_required()
 def get_current_sprint():
-    identity = get_jwt_identity()
     if sprints is None:
         return jsonify({"error": "Database connection error"}), 500
     try:
@@ -73,7 +70,6 @@ def get_current_sprint():
 @app.route('/list-sprints', methods=['GET'])
 @jwt_required()
 def list_sprints():
-    identity = get_jwt_identity()
     all_sprints = list(sprints.find())
     return jsonify(convert_objectid(all_sprints))
 
@@ -85,3 +81,18 @@ def login():
         access_token = create_access_token(identity={'username': username})
         return jsonify(access_token=access_token)
     return jsonify({'msg': 'Invalid credentials'}), 401
+
+# New route to handle summarization
+@app.route('/summarize-sprint', methods=['POST'])
+@jwt_required()
+def summarize_sprint():
+    data = request.json
+    sprint_data = data.get('sprint_data')
+    if not sprint_data:
+        return jsonify({"error": "Sprint data is required"}), 400
+    try:
+        summary = summarize_data(sprint_data)
+        return jsonify({"summary_ai": summary})
+    except Exception as e:
+        print(f"Error summarizing sprint data: {e}")
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
