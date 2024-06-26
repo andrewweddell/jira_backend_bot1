@@ -5,6 +5,7 @@ from flask import request, jsonify, current_app as app
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
 from .services import fetch_boards, fetch_sprint_data, summarize_data, send_email, convert_objectid
 from .db import sprints
+from .services import fetch_boards
 
 @app.route('/fetch-boards', methods=['GET'])
 @jwt_required()

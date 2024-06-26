@@ -9,6 +9,7 @@ from email.mime.multipart import MIMEMultipart
 from bson import ObjectId
 import base64
 from dotenv import load_dotenv
+from .config import SPECIFIC_BOARDS
 
 # Load environment variables
 load_dotenv()
@@ -32,7 +33,11 @@ def fetch_boards():
 
     response = requests.get(url, headers=headers)
     response.raise_for_status()
-    return response.json()
+    all_boards = response.json().get('values', [])
+
+    # Filter the boards based on the specific board names
+    filtered_boards = [board for board in all_boards if board['name'] in SPECIFIC_BOARDS]
+    return filtered_boards
 
 def fetch_sprint_data(board_id):
     jira_domain = os.getenv('JIRA_DOMAIN')
